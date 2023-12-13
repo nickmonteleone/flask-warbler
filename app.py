@@ -241,20 +241,35 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
 
-    # FIXME: might not have csrf protection here (g.user vs user)
-
     if not g.user:
         raise Unauthorized()
 
     form = UserEditForm(obj=g.user)
 
     if form.validate_on_submit() and g.user:
-        input_data = {k: v for k, v in form.data.items() if k != "csrf_token"}
-        g.user = User(**input_data)
 
-        db.session.commit()
+        user = User.authenticate(
+            g.user.username,
+            form.password.data,
+        )
 
-        return redirect(f"/users/{g.user.id}")
+        if user:
+            g.user.username = form.username.data
+            g.user.email = form.email.data
+            g.user.location = form.location.data
+            g.user.bio = form.bio.data
+            g.user.image_url = form.image_url.data
+            g.user.header_image_url = form.header_image_url.data
+
+            db.session.commit()
+
+            flash(f"Updated {g.user.username}!", "success")
+
+            return redirect(f"/users/{g.user.id}")
+
+        else:
+
+            form.password.errors = ["Incorrect password."]
 
     return render_template('/users/edit.html', form=form)
 
