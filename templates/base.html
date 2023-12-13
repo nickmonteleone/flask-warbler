@@ -58,12 +58,14 @@
         <li><a href="/messages/new">New Message</a></li>
         <li>
           <!-- <a href="/logout">Log out</a> -->
-          <form method="POST" action="/logout">
-            {{ g.csrf_form.hidden_tag() }}
-            <button>
+          <a>
+            <form method="POST" action="/logout">
+              {{ g.csrf_form.hidden_tag() }}
+            <button type="submit" class="link-button">
               Log out
             </button>
-          </form>
+            </form>
+          </a>
         </li>
       {% endif %}
 
