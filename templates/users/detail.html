@@ -4,7 +4,10 @@
 
 <div id="warbler-hero"
      class="full-width">
+     <img src="{{ user.header_image_url }}" alt="" class="profile-image">
 </div>
+
+<!-- <img src="{{ user.header_image_url }}" alt="" class="profile-image"> -->
 <img src="{{ user.image_url }}"
      alt="Image for {{ user.username }}"
      id="profile-avatar">
@@ -83,10 +86,10 @@
 <div class="row">
   <div class="col-sm-3">
     <h4 id="sidebar-username">@{{ user.username }}</h4>
-    <p>BIO HERE</p>
+    <p>{{ user.bio }}</p>
     <p class="user-location">
       <span class="bi bi-map"></span>
-      LOCATION HERE
+      {{ user.location }}
     </p>
   </div>
 

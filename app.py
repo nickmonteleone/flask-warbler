@@ -6,7 +6,8 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
 
-from forms import UserAddForm, LoginForm, MessageForm, CSRFProtectForm
+from forms import (UserAddForm,
+                LoginForm, MessageForm, CSRFProtectForm, UserEditForm)
 from models import db, connect_db, User, Message
 
 load_dotenv()
@@ -129,9 +130,7 @@ def login():
 def logout():
     """Handle logout of user and redirect to homepage."""
 
-    form = g.csrf_form
-
-    if form.validate_on_submit():
+    if g.csrf_form.validate_on_submit():
 
         if g.user:
             do_logout()
@@ -139,9 +138,6 @@ def logout():
             return redirect("/")
 
     raise Unauthorized()
-
-    # IMPLEMENT THIS AND FIX BUG
-    # DO NOT CHANGE METHOD ON ROUTE
 
 
 ##############################################################################
@@ -208,9 +204,7 @@ def start_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    form = g.csrf_form
-
-    if form.validate_on_submit() and g.user:
+    if g.csrf_form.validate_on_submit() and g.user:
 
         followed_user = User.query.get_or_404(follow_id)
         g.user.following.append(followed_user)
@@ -223,8 +217,6 @@ def start_following(follow_id):
         raise Unauthorized()
 
 
-
-
 @app.post('/users/stop-following/<int:follow_id>')
 def stop_following(follow_id):
     """Have currently-logged-in-user stop following this user.
@@ -232,9 +224,7 @@ def stop_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    form = g.csrf_form
-
-    if form.validate_on_submit() and g.user:
+    if g.csrf_form.validate_on_submit() and g.user:
 
         followed_user = User.query.get_or_404(follow_id)
         g.user.following.remove(followed_user)
@@ -246,11 +236,28 @@ def stop_following(follow_id):
         raise Unauthorized()
 
 
+
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user."""
 
-    # TODO: IMPLEMENT THIS for step 3 - show detail.html
+    # FIXME: might not have csrf protection here (g.user vs user)
+
+    if not g.user:
+        raise Unauthorized()
+
+    form = UserEditForm(obj=g.user)
+
+    if form.validate_on_submit() and g.user:
+        input_data = {k: v for k, v in form.data.items() if k != "csrf_token"}
+        g.user = User(**input_data)
+
+        db.session.commit()
+
+        return redirect(f"/users/{g.user.id}")
+
+    return render_template('/users/edit.html', form=form)
+
 
 
 @app.post('/users/delete')
@@ -260,9 +267,7 @@ def delete_user():
     Redirect to signup page.
     """
 
-    form = g.csrf_form
-
-    if form.validate_on_submit() and g.user:
+    if g.csrf_form.validate_on_submit() and g.user:
 
         do_logout()
 
@@ -319,9 +324,7 @@ def delete_message(message_id):
     Redirect to user page on success.
     """
 
-    form = g.csrf_form
-
-    if form.validate_on_submit() and g.user:
+    if g.csrf_form.validate_on_submit() and g.user:
 
         msg = Message.query.get_or_404(message_id)
         db.session.delete(msg)
