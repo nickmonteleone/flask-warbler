@@ -367,18 +367,17 @@ def homepage():
 
     #FIXME: Better/Code-savy? way?
 
-    message_user_ids = [user.id for user in g.user.following]
-    message_user_ids.append(g.user.id)
-
     if g.user:
-        # breakpoint()
+
+        message_user_ids = [user.id for user in g.user.following]
+        message_user_ids.append(g.user.id)
+
         messages = (Message
                     .query
                     .filter(Message.user_id.in_(message_user_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-        # breakpoint()
 
         return render_template('home.html', messages=messages)
 
