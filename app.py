@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_ECHO'] = False
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 toolbar = DebugToolbarExtension(app)
 
@@ -26,7 +26,9 @@ connect_db(app)
 ##############################################################################
 # User signup/login/logout
 
-
+#Errors: Cannot logout, cannot delete message
+#Note: not authenticaiton error - too nice
+#g = Flask Global - application context (what's the diff from a normal global)
 @app.before_request
 def add_user_to_g():
     """If we're logged in, add curr user to Flask global."""
