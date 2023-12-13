@@ -60,10 +60,8 @@
           <!-- <a href="/logout">Log out</a> -->
           <a>
             <form method="POST" action="/logout">
-              {{ g.csrf_form.hidden_tag() }}
-            <button type="submit" class="link-button">
-              Log out
-            </button>
+              {{ g.csrf_form.csrf_token }}
+            <button type="submit" class="btn btn-link">Log out</button>
             </form>
           </a>
         </li>
