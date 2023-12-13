@@ -28,9 +28,6 @@ connect_db(app)
 ##############################################################################
 # User signup/login/logout
 
-#Errors: Cannot logout, cannot delete message
-#Note: not authenticaiton error - too nice
-#g = Flask Global - application context (what's the diff from a normal global)
 @app.before_request
 def add_to_g():
     """Add parameters to Flask global before each request."""

@@ -60,13 +60,13 @@ class User(db.Model):
     )
 
     image_url = db.Column(
-        db.String(255),
+        db.String(500),
         nullable=False,
         default=DEFAULT_IMAGE_URL,
     )
 
     header_image_url = db.Column(
-        db.String(255),
+        db.String(500),
         nullable=False,
         default=DEFAULT_HEADER_IMAGE_URL,
     )
