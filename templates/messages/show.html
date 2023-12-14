@@ -22,11 +22,19 @@
 
             {% if g.user %}
             {% if g.user.id == message.user.id %}
+
+            {% if g.user.is_liked_by(message) %}
             <form method="POST"
-                  action="/messages/{{ message.id }}/like">
-                {{ g.csrf_form.csrf_token }}
-              <button class="btn btn-primary">Like</button>
+                  action="/messages/{{ message.id }}/unlike">
+              {{ g.csrf_form.csrf_token }}
+              <button class="bi bi-star-fill"></button>
             </form>
+            {% else %}
+            <form method="POST" action="/messages/{{ message.id }}/like">
+              {{ g.csrf_form.csrf_token }}
+              <button class="bi bi-star"></button>
+            </form>
+            {% endif %}
             <form method="POST"
                   action="/messages/{{ message.id }}/delete">
                 {{ g.csrf_form.csrf_token }}

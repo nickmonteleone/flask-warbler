@@ -389,6 +389,12 @@ def like_message(message_id):
         raise Unauthorized()
 
     message_to_like = Message.query.get_or_404(message_id)
+
+
+    if g.user.id == message_to_like.user_id:
+        flash("You cannot like your own Warble!", "danger")
+        return redirect(f"/messages/{message_id}")
+
     g.user.messages_liked.add(message_to_like)
     db.session.commit()
 
@@ -486,9 +492,12 @@ def add_header(response):
 
 
 #Things to do:
-# Create a like function (can't like own tweet)
+# Create a like function (can't like own tweet) CHECK
 # CSS/HTML create a star on liked messages
 # Clicking on a star should invoke a unlike message feature
 # Create a page that shows liked warbles
 # Create a model for Likes - have it query.all() by specific users to find
 # tally
+
+#<i class="bi bi-star"></i>
+#<i class="bi bi-star-fill"></i>
