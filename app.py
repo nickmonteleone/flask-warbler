@@ -129,6 +129,9 @@ def login():
 def logout():
     """Handle logout of user and redirect to homepage."""
 
+    #TODO: security issue: handle unauthorization first (and statements)
+    # form = g.csrf_form --> coding hygiene
+
     if g.csrf_form.validate_on_submit():
 
         if g.user:
@@ -148,6 +151,8 @@ def list_users():
 
     Can take a 'q' param in querystring to search by that username.
     """
+
+    #TODO: without user in global (maybe no one logged in)
 
     if not g.user:
         raise Unauthorized()
@@ -203,6 +208,9 @@ def start_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
+    #form = csrf_form
+    #and if not validate --> fail first
+
     if g.csrf_form.validate_on_submit() and g.user:
 
         followed_user = User.query.get_or_404(follow_id)
@@ -222,6 +230,8 @@ def stop_following(follow_id):
 
     Redirect to following page for the current for the current user.
     """
+    #form = csrf_form
+    #and if not validate --> fail first
 
     if g.csrf_form.validate_on_submit() and g.user:
 
@@ -240,6 +250,9 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
 
+    #TODO:verb function name - update_profile()
+    # create a variable for user = g.user (legibility)
+
     if not g.user:
         raise Unauthorized()
 
@@ -253,10 +266,12 @@ def profile():
         )
 
         if user:
+            #TODO:use user (same instance)
             g.user.username = form.username.data
             g.user.email = form.email.data
             g.user.location = form.location.data
             g.user.bio = form.bio.data
+            #TODO: = form.image_url.data or DEFAULT_IMAGE_URL (truthie)
             g.user.image_url = (
                 form.image_url.data if form.image_url.data
                 else DEFAULT_IMAGE_URL
@@ -267,6 +282,7 @@ def profile():
             )
 
             db.session.commit()
+            #TODO: CANCEL BUTTON error
 
             flash(f"Updated {g.user.username}!", "success")
 
@@ -286,6 +302,8 @@ def delete_user():
 
     Redirect to signup page.
     """
+    #TODO: fail first + form = csrf_form
+    #TODO: for messages in user.messages -- > delete
 
     if g.csrf_form.validate_on_submit() and g.user:
 
@@ -309,7 +327,10 @@ def add_message():
     Show form if GET. If valid, update message and redirect to user page.
     """
 
-    # FIXME: might not have csrf protection here
+    #TODO: csrf only for submissions/clicking a button, here we want to focus
+    # on user experience (mistakes oops I forgot to login --> redirect to login)
+    #me sending my friends an IG link --> UNAUTHORIZED vs being logged in)
+
     if not g.user:
         raise Unauthorized()
 
@@ -344,6 +365,10 @@ def delete_message(message_id):
     Redirect to user page on success.
     """
 
+    #TODO: fail fast + form = csrf_form
+    #can delete other users messages (need to evaluate message in user.messages)
+    # or message.user = user
+
     if g.csrf_form.validate_on_submit() and g.user:
 
         msg = Message.query.get_or_404(message_id)
@@ -370,7 +395,7 @@ def homepage():
     - logged in: 100 most recent messages of self & followed_users
     """
 
-    #FIXME: Better/Code-savy? way?
+    #TODO:message_user_ids --> user_ids + add array + [g.user.id]
 
     if g.user:
 
@@ -397,3 +422,13 @@ def add_header(response):
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
     response.cache_control.no_store = True
     return response
+
+
+
+
+#TODO: Things to bring up in tomorrow's lecture
+# cascade - delete
+# cache - no store
+# fail first
+# UNAUTHORIZED vs Oops you forgot to login (Sending IG link to my friends)
+    # be aware of what errors you are trying to send and why
