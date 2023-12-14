@@ -90,7 +90,7 @@ def signup():
             db.session.commit()
 
         except IntegrityError:
-            flash("Username already taken", 'danger')
+            flash("Username or email already taken", 'danger')
             return render_template('users/signup.html', form=form)
 
         do_login(user)
@@ -253,27 +253,40 @@ def update_profile():
         )
 
         if user:
-            user.username = form.username.data
-            user.email = form.email.data
-            user.location = form.location.data
-            user.bio = form.bio.data
 
-            user.image_url = form.image_url.data or User.image_url.default.arg
-            user.header_image_url = (form.header_image_url.data
-                or User.header_image_url.default.arg)
+            if (user.username != form.username.data and
+                User.query.filter_by(username=form.username.data)
+                .one_or_none()):
 
-            db.session.commit()
+                form.username.errors = ['Username already taken!']
 
-            flash(f"Updated {g.user.username}!", "success")
+            elif (user.email != form.email.data and
+                User.query.filter_by(email=form.email.data)
+                .one_or_none()):
 
-            return redirect(f"/users/{g.user.id}")
+                form.email.errors = ['Email already taken!']
+
+            else:
+
+                user.username = form.username.data
+                user.email = form.email.data
+                user.location = form.location.data
+                user.bio = form.bio.data
+
+                user.image_url = (form.image_url.data
+                    or User.image_url.default.arg)
+                user.header_image_url = (form.header_image_url.data
+                    or User.header_image_url.default.arg)
+
+                db.session.commit()
+                flash(f"Updated {g.user.username}!", "success")
+                return redirect(f"/users/{g.user.id}")
 
         else:
 
             form.password.errors = ["Incorrect password."]
 
     return render_template('/users/edit.html', form=form)
-
 
 
 @app.post('/users/delete')
