@@ -23,6 +23,11 @@
             {% if g.user %}
             {% if g.user.id == message.user.id %}
             <form method="POST"
+                  action="/messages/{{ message.id }}/like">
+                {{ g.csrf_form.csrf_token }}
+              <button class="btn btn-primary">Like</button>
+            </form>
+            <form method="POST"
                   action="/messages/{{ message.id }}/delete">
                 {{ g.csrf_form.csrf_token }}
               <button class="btn btn-outline-danger">Delete</button>
