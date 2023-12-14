@@ -200,7 +200,7 @@ def show_followers(user_id):
 
 @app.get('/users/<int:user_id>/messages/liked')
 def show_liked_messages(user_id):
-    """Show 100 most recent liked messages"""
+    """Show liked messages"""
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -208,13 +208,13 @@ def show_liked_messages(user_id):
 
     user = User.query.get_or_404(user_id)
 
+    #simpler way to sort?  is there a way to sort by when liked
     messages_ids_to_show = [message.id for  message in user.messages_liked]
 
     messages = (Message
                 .query
                 .filter(Message.id.in_(messages_ids_to_show))
                 .order_by(Message.timestamp.desc())
-                .limit(100)
                 .all())
 
     return render_template('/users/liked.html', user=user, messages=messages)
@@ -420,7 +420,7 @@ def like_message(message_id):
         g.user.messages_liked.append(message_to_like)
         db.session.commit()
 
-    return redirect(f"/messages/{message_id}")
+    return redirect(request.referrer)
 
 
 @app.post('/messages/<int:message_id>/unlike')
@@ -440,7 +440,7 @@ def unlike_message(message_id):
     g.user.messages_liked.remove(message_to_unlike)
     db.session.commit()
 
-    return redirect(f"/messages/{message_id}")
+    return redirect(request.referrer)
 
 
 ##############################################################################

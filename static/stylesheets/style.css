@@ -22,6 +22,10 @@ body.error-404 {
 
 /* ======================= Nav */
 
+.text-black{
+  text-decoration: none;
+}
+
 .navbar {
   background-color: #fff;
   height: 46px;
