@@ -233,8 +233,12 @@ def start_following(follow_id):
         raise Unauthorized()
 
     followed_user = User.query.get_or_404(follow_id)
-    g.user.following.append(followed_user)
-    db.session.commit()
+
+    if g.user.id == follow_id:
+        flash("You cannot follow yourself!", "danger")
+    else:
+        g.user.following.append(followed_user)
+        db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
 
