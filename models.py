@@ -88,9 +88,7 @@ class User(db.Model):
         nullable=False,
     )
 
-    #TODO:huge changes w/o much oversight (could cause issues) - dont touch models
-    #separate people run them (we focus on app.py)
-    messages = db.relationship('Message', cascade="all,delete", backref="user")
+    messages = db.relationship('Message', backref="user")
 
     followers = db.relationship(
         "User",
