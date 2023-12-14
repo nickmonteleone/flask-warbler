@@ -21,8 +21,6 @@
             </a>
 
             {% if g.user %}
-            {% if g.user.id == message.user.id %}
-
             {% if g.user.is_liked_by(message) %}
             <form method="POST"
                   action="/messages/{{ message.id }}/unlike">
@@ -35,6 +33,7 @@
               <button class="bi bi-star"></button>
             </form>
             {% endif %}
+            {% if g.user.id == message.user.id %}
             <form method="POST"
                   action="/messages/{{ message.id }}/delete">
                 {{ g.csrf_form.csrf_token }}
