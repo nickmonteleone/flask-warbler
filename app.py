@@ -198,6 +198,28 @@ def show_followers(user_id):
     return render_template('users/followers.html', user=user)
 
 
+@app.get('/users/<int:user_id>/messages/liked')
+def show_liked_messages(user_id):
+    """Show 100 most recent liked messages"""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+
+    messages_ids_to_show = [message.id for  message in user.messages_liked]
+
+    messages = (Message
+                .query
+                .filter(Message.id.in_(messages_ids_to_show))
+                .order_by(Message.timestamp.desc())
+                .limit(100)
+                .all())
+
+    return render_template('/users/liked.html', user=user, messages=messages)
+
+
 @app.post('/users/follow/<int:follow_id>')
 def start_following(follow_id):
     """Add a follow for the currently-logged-in user.
@@ -393,10 +415,10 @@ def like_message(message_id):
     # like button hidden for own messages, but also catching here
     if g.user.id == message_to_like.user_id:
         flash("You cannot like your own Warble!", "danger")
-        return redirect(f"/messages/{message_id}")
 
-    g.user.messages_liked.append(message_to_like)
-    db.session.commit()
+    else:
+        g.user.messages_liked.append(message_to_like)
+        db.session.commit()
 
     return redirect(f"/messages/{message_id}")
 
@@ -414,34 +436,11 @@ def unlike_message(message_id):
         raise Unauthorized()
 
     message_to_unlike = Message.query.get_or_404(message_id)
+
     g.user.messages_liked.remove(message_to_unlike)
     db.session.commit()
 
     return redirect(f"/messages/{message_id}")
-
-@app.get('/users/<int:user_id>/messages/liked')
-def show_liked_messages(user_id):
-    """Show 100 most recent liked messages"""
-
-    if not g.user:
-        flash("Access unauthorized.", "danger")
-        return redirect("/")
-
-    user = User.query.get_or_404(user_id)
-
-    messages_ids_to_show = [message.id for  message in user.messages_liked]
-
-    # messages_liked = db.relationship('Message', secondary='Like',
-    #                                   backref='liked_users')
-
-    messages = (Message
-                .query
-                .filter(Message.id.in_(messages_ids_to_show))
-                .order_by(Message.timestamp.desc())
-                .limit(100)
-                .all())
-
-    return render_template('/users/liked.html', user=user, messages=messages)
 
 
 ##############################################################################
