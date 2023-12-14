@@ -202,7 +202,7 @@ def show_followers(user_id):
 def start_following(follow_id):
     """Add a follow for the currently-logged-in user.
 
-    Redirect to following page for the current for the current user.
+    Redirect to following page for the current user.
     """
 
     form = g.csrf_form
@@ -221,7 +221,7 @@ def start_following(follow_id):
 def stop_following(follow_id):
     """Have currently-logged-in-user stop following this user.
 
-    Redirect to following page for the current for the current user.
+    Redirect to following page for the current user.
     """
 
     form = g.csrf_form
@@ -363,6 +363,67 @@ def delete_message(message_id):
     return redirect(f"/users/{g.user.id}")
 
 
+@app.post('/messages/<int:message_id>/like')
+def like_message(message_id):
+    """Add a like to a message for the currently-logged-in user.
+
+    Redirect to the current message.
+    """
+
+    form = g.csrf_form
+
+    if not form.validate_on_submit() or not g.user:
+        raise Unauthorized()
+
+    message_to_like = Message.query.get_or_404(message_id)
+    g.user.messages_liked.add(message_to_like)
+    db.session.commit()
+
+    return redirect(f"/messages/{message_id}")
+
+
+@app.post('/messages/<int:message_id>/unlike')
+def unlike_message(message_id):
+    """Have currently-logged-in-user unlike a selected message.
+
+    Redirect to the current message.
+    """
+
+    form = g.csrf_form
+
+    if not form.validate_on_submit() or not g.user:
+        raise Unauthorized()
+
+    message_to_unlike = Message.query.get_or_404(message_id)
+    g.user.messages_liked.delete(message_to_unlike)
+    db.session.commit()
+
+    return redirect(f"/messages/{message_id}")
+
+@app.get('/messages/liked')
+def show_liked_messages():
+    """Show 100 most recent liked messages"""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+
+    messages = g.user.messages_liked
+
+    # messages_liked = db.relationship('Message', secondary='Like',
+    #                                   backref='liked_users')
+
+    # messages = (Message
+    #             .query
+    #             .filter(Message.user_id.in_(user_ids_to_show))
+    #             .order_by(Message.timestamp.desc())
+    #             .limit(100)
+    #             .all())
+
+    return render_template('/messages/liked.html', messages=messages)
+
+
 ##############################################################################
 # Homepage and error pages
 
@@ -409,3 +470,12 @@ def add_header(response):
 # fail first
 # UNAUTHORIZED vs Oops you forgot to login (Sending IG link to my friends)
     # be aware of what errors you are trying to send and why
+
+
+#Things to do:
+# Create a like function (can't like own tweet)
+# CSS/HTML create a star on liked messages
+# Clicking on a star should invoke a unlike message feature
+# Create a page that shows liked warbles
+# Create a model for Likes - have it query.all() by specific users to find
+# tally
