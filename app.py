@@ -8,7 +8,9 @@ from werkzeug.exceptions import Unauthorized
 
 from forms import (UserAddForm,
                 LoginForm, MessageForm, CSRFProtectForm, UserEditForm)
-from models import db, connect_db, User, Message
+from models import (db,
+                    connect_db, User, Message,
+                    DEFAULT_HEADER_IMAGE_URL, DEFAULT_IMAGE_URL)
 
 load_dotenv()
 
@@ -255,8 +257,14 @@ def profile():
             g.user.email = form.email.data
             g.user.location = form.location.data
             g.user.bio = form.bio.data
-            g.user.image_url = form.image_url.data
-            g.user.header_image_url = form.header_image_url.data
+            g.user.image_url = (
+                form.image_url.data if form.image_url.data
+                else DEFAULT_IMAGE_URL
+            )
+            g.user.header_image_url = (
+                form.header_image_url.data if form.image_url.data
+                else DEFAULT_HEADER_IMAGE_URL
+            )
 
             db.session.commit()
 
