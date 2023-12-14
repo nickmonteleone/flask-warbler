@@ -419,28 +419,29 @@ def unlike_message(message_id):
 
     return redirect(f"/messages/{message_id}")
 
-@app.get('/messages/liked')
-def show_liked_messages():
+@app.get('/users/<int:user_id>/messages/liked')
+def show_liked_messages(user_id):
     """Show 100 most recent liked messages"""
 
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
+    user = User.query.get_or_404(user_id)
 
-    messages = g.user.messages_liked
+    messages_ids_to_show = [message.id for  message in user.messages_liked]
 
     # messages_liked = db.relationship('Message', secondary='Like',
     #                                   backref='liked_users')
 
-    # messages = (Message
-    #             .query
-    #             .filter(Message.user_id.in_(user_ids_to_show))
-    #             .order_by(Message.timestamp.desc())
-    #             .limit(100)
-    #             .all())
+    messages = (Message
+                .query
+                .filter(Message.id.in_(messages_ids_to_show))
+                .order_by(Message.timestamp.desc())
+                .limit(100)
+                .all())
 
-    return render_template('/messages/liked.html', messages=messages)
+    return render_template('/users/liked.html', user=user, messages=messages)
 
 
 ##############################################################################
@@ -495,10 +496,8 @@ def add_header(response):
 # Create a like function (can't like own tweet) CHECK
 # CSS/HTML create a star on liked messages CHECK
 # Clicking on a star should invoke a unlike message feature CHECK
+# Add liked icon message card on other pages CHECK
+
 # Create a page that shows liked warbles
 # Create a model for Likes - have it query.all() by specific users to find
 # tally
-# Add liked icon message card on other pages CHECK
-
-#<i class="bi bi-star"></i>
-#<i class="bi bi-star-fill"></i>
