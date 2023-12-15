@@ -7,6 +7,7 @@
 
 import os
 from unittest import TestCase
+from sqlalchemy.exc import IntegrityError
 
 from models import db, User, Message, Follow
 
@@ -39,6 +40,8 @@ class UserModelTestCase(TestCase):
         db.session.commit()
         self.u1_id = u1.id
         self.u2_id = u2.id
+        self.u1 = u1
+        self.u2 = u2
 
     def tearDown(self):
         db.session.rollback()
@@ -50,14 +53,86 @@ class UserModelTestCase(TestCase):
         self.assertEqual(len(u1.messages), 0)
         self.assertEqual(len(u1.followers), 0)
 
-    def test_is_following()
+    def test_is_following(self):
 
-# Does is_following successfully detect when user1 is following user2?
-# Does is_following successfully detect when user1 is not following user2?
-# Does is_followed_by successfully detect when user1 is followed by user2?
-# Does is_followed_by successfully detect when user1 is not followed by user2?
+        self.u1.following.append(self.u2)
+        db.session.commit()
+
+        self.assertTrue(self.u1.is_following(self.u2))
+        self.assertFalse(self.u2.is_following(self.u1))
+
+    def test_is_followed_by(self):
+
+        self.u1.followers.append(self.u2)
+        db.session.commit()
+
+        self.assertTrue(self.u1.is_followed_by(self.u2))
+        self.assertFalse(self.u2.is_followed_by(self.u1))
+
+    def test_valid_signup(self):
+
+        u3 = User.signup("u3", "u3@email.com", "password", None)
+
+        self.assertIsNotNone(User
+                             .query
+                             .filter_by(username=u3.username)
+                             .one_or_none())
+
+
+    def test_invalid_signup(self):
+
+        self.assertRaises(IntegrityError,
+            User.signup(
+                        "u1",
+                        "u4@gmail.com",
+                        "password",
+                        None
+            ))
+
+
+# def signup(cls, username, email, password, image_url=DEFAULT_IMAGE_URL):
+#         """Sign up user.
+
+#         Hashes password and adds user to session.
+#         """
+
+#         hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
+
+#         user = User(
+#             username=username,
+#             email=email,
+#             password=hashed_pwd,
+#             image_url=image_url,
+#         )
+
+#         db.session.add(user)
+#         return user
+
 # Does User.signup successfully create a new user given valid credentials?
 # Does User.signup fail to create a new user if any of the validations (eg uniqueness, non-nullable fields) fail?
+
+
+
+
+    # def test_register(self):
+    #     User.register("uname", "pwd", "First", "Last", "e@e.com")
+    #     db.session.commit()
+
+    #     u = db.session.get(User, "uname")
+    #     self.assertTrue(bcrypt.check_password_hash(u.password, "pwd"))
+
+    # def test_auth_ok(self):
+    #     u = db.session.get(User, "user-1")
+    #     self.assertEqual(User.authenticate("user-1", "password"), u)
+
+    # def test_auth_fail_no_user(self):
+    #     self.assertFalse(User.authenticate("user-X", "password"))
+
+    # def test_auth_ok_wrong_pwd(self):
+    #     u = db.session.get(User, "user-1")
+    #     self.assertFalse(User.authenticate("user-1", "wrong"))
+
+
 # Does User.authenticate successfully return a user when given a valid username and password?
 # Does User.authenticate fail to return a user when the username is invalid?
 # Does User.authenticate fail to return a user when the password is invalid
