@@ -43,38 +43,91 @@ class UserBaseViewTestCase(TestCase):
     def setUp(self):
         User.query.delete()
 
-        u1 = User.signup("u1", "u1@email.com", "password", None)
-        u2 = User.signup("u2", "u2@email.com", "password", None)
-        db.session.flush()
+        self.u1 = User.signup("u1", "u1@email.com", "password", None)
+        self.u2 = User.signup("u2", "u2@email.com", "password", None)
 
-        m1 = Message(text="m1-text", user_id=u1.id)
-        db.session.add_all([m1])
         db.session.commit()
 
-        self.u1_id = u1.id
-        self.u2_id = u2.id
-        self.m1_id = m1.id
+    def tearDown(self):
+        """Rollback any fouled transactions"""
+
+        db.session.rollback()
+
 
 class UserAddViewTestCase(UserBaseViewTestCase):
-    def test_add_user(self):
-        # Since we need to change the session to mimic logging in,
-        # we need to use the changing-session trick:
+
+    def test_homepage_redirect_loggedin(self):
+        """Should redirect to home if logged in."""
+
         with app.test_client() as c:
             with c.session_transaction() as sess:
-                sess[CURR_USER_KEY] = self.u1_id
+                sess[CURR_USER_KEY] = self.u1.id
 
-            # Now, that session setting is saved, so we can have
-            # the rest of ours test
-            resp = c.post("/signup", data={
-                                            "username": "test",
-                                            "email": "test@email.com",
-                                            "password": "password",
-                                            "image_url": None
-                                            })
+            resp = c.get('/')
+            html = resp.text
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Comment for home.html loaded.', html)
+
+    def test_homepage_redirect_anon(self):
+        """Should redirect to home anon if not logged in."""
+
+        with app.test_client() as c:
+            resp = c.get('/')
+            html = resp.text
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Comment for home-anon.html loaded.', html)
+
+    def test_signup_form(self):
+        """Should load signup form"""
+
+        with app.test_client() as c:
+            resp = c.get("/signup")
+            html = resp.text
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Comment for users/signup.html loaded.', html)
+
+    def test_signup_submit_ok(self):
+        """Should sign up user and redirect to home"""
+
+        with app.test_client() as c:
+            resp = c.post(
+                "/signup",
+                data={
+                    "username": "test",
+                    "email": "test@email.com",
+                    "password": "password",
+                    "image_url": None
+                    },
+            )
 
             self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.location, "/")
 
             self.assertIsNotNone(User
                                  .query
                                  .filter_by(username="test")
                                  .one_or_none())
+
+    def test_signup_submit_fail(self):
+        """Should redirect back to form if username or email taken"""
+
+        with app.test_client() as c:
+            resp = c.post(
+                "/signup",
+                data={
+                    "username": self.u1.username,
+                    "email": self.u1.email,
+                    "password": "password",
+                    "image_url": None
+                    },
+                follow_redirects=True,
+            )
+            html = resp.text
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Comment for users/signup.html loaded.', html)
+            self.assertIn("Username or email already taken", html)
+
