@@ -16,15 +16,16 @@ body.error-404 {
   border-radius: 50px;
 }
 
+.btn-link {
+  z-index: 3;
+  position: relative;
+}
+
 .btn:hover {
   cursor: pointer;
 }
 
 /* ======================= Nav */
-
-.text-black{
-  text-decoration: none;
-}
 
 .navbar {
   background-color: #fff;
