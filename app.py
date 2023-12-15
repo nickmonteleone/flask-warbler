@@ -235,7 +235,8 @@ def start_following(follow_id):
 
     if g.user.id == follow_id:
         flash("You cannot follow yourself!", "danger")
-    else:
+
+    elif followed_user not in g.user.following:
         g.user.following.append(followed_user)
         db.session.commit()
 
@@ -255,8 +256,10 @@ def stop_following(follow_id):
         raise Unauthorized()
 
     followed_user = User.query.get_or_404(follow_id)
-    g.user.following.remove(followed_user)
-    db.session.commit()
+
+    if followed_user in g.user.following:
+        g.user.following.remove(followed_user)
+        db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
 
@@ -279,17 +282,21 @@ def update_profile():
 
         if user:
 
-            if (user.username != form.username.data and
+            username_check = (user.username != form.username.data and
                 User.query.filter_by(username=form.username.data)
-                .one_or_none()):
+                .one_or_none())
 
-                form.username.errors = ['Username already taken!']
-
-            elif (user.email != form.email.data and
+            email_check = (user.email != form.email.data and
                 User.query.filter_by(email=form.email.data)
-                .one_or_none()):
+                .one_or_none())
 
-                form.email.errors = ['Email already taken!']
+            if username_check or email_check:
+
+                if username_check:
+                    form.username.errors = ['Username already taken!']
+
+                if email_check:
+                    form.email.errors = ['Email already taken!']
 
             else:
 
