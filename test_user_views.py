@@ -56,8 +56,7 @@ class UserBaseViewTestCase(TestCase):
 
         db.session.rollback()
 
-
-class UserAddViewTestCase(UserBaseViewTestCase):
+class UserHomeRedirectTestCase(UserBaseViewTestCase):
 
     def test_homepage_redirect_loggedin(self):
         """Should redirect to home if logged in."""
@@ -81,6 +80,9 @@ class UserAddViewTestCase(UserBaseViewTestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn('Comment for home-anon.html loaded.', html)
+
+
+class UserAddViewTestCase(UserBaseViewTestCase):
 
     def test_signup_form(self):
         """Should load signup form"""
@@ -147,6 +149,9 @@ class UserAddViewTestCase(UserBaseViewTestCase):
             self.assertIn('Comment for users/signup.html loaded.', html)
             self.assertIn("Username or email already taken", html)
 
+
+class UserLoginViewTestCase(UserBaseViewTestCase):
+
     def test_login_form(self):
         """Should load login form"""
 
@@ -198,9 +203,23 @@ class UserAddViewTestCase(UserBaseViewTestCase):
             resp = c.post(
                 "/logout"
             )
+
             self.assertEqual(resp.status_code, 302)
             self.assertEqual(resp.location, "/")
             self.assertEqual(session.get(CURR_USER_KEY), None)
+
+            resp = c.get(
+                resp.location,
+                follow_redirects=True,
+            )
+
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('User logged out!', html)
+
+
+class UserListViewTestCase(UserBaseViewTestCase):
 
     def test_list_users(self):
         """Should list warbler users if logged-in"""
@@ -215,9 +234,34 @@ class UserAddViewTestCase(UserBaseViewTestCase):
             self.assertIn("Comment for users/index.html loaded.", html)
             self.assertEqual(session.get(CURR_USER_KEY), self.u1.id)
 
-    #Test searching users
+    def test_list_users_search_found(self):
+        """Should find a searched for user"""
+
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1.id
+
+            resp = c.get(f'/users?q={self.u2.username}')
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(self.u2.username, html)
+
+    def test_list_users_search_not_found(self):
+        """Should not find user with search criteria that doesn't match"""
+
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1.id
+
+            resp = c.get(f'/users?q={self.u1.username}')
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn(self.u2.username, html)
 
 
+class UserProfileViewTestCase(UserBaseViewTestCase):
 
     def test_show_user(self):
         """Should show data about a user if logged in"""
@@ -234,34 +278,50 @@ class UserAddViewTestCase(UserBaseViewTestCase):
             self.assertIn("Comment for users/show.html loaded.", html)
             self.assertIn(self.u1.username, html)
 
-    # def test_show_user_unauth(self):
-    #     with app.test_client() as client:
-    #         with client.session_transaction() as sess:
-    #             sess["username"] = "wrong"
-    #         resp = client.get(
-    #             "/users/user-1",
-    #         )
-    #         self.assertEqual(resp.status_code, 401)
+    def test_show_user_unauth(self):
+        """Should not allow unauth user"""
 
-    # def test_show_user_404(self):
-    #     with app.test_client() as client:
-    #         with client.session_transaction() as sess:
-    #             sess["username"] = "wrong"
-    #         resp = client.get(
-    #             "/users/wrong",
-    #         )
-    #         self.assertEqual(resp.status_code, 404)
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = None
+            resp = client.get(
+                f"/users/{self.u1.id}",
+            )
 
-    # def test_remove_user(self):
-    #     with app.test_client() as client:
-    #         with client.session_transaction() as sess:
-    #             sess["username"] = "user-1"
-    #         resp = client.post(
-    #             "/users/user-1/delete",
-    #         )
-    #         self.assertEqual(resp.status_code, 302)
-    #         self.assertEqual(resp.location, "/login")
-    #         self.assertEqual(session.get(AUTH_KEY), None)
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.location, "/")
+
+            resp = client.get(
+                resp.location,
+                follow_redirects=True,
+            )
+
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Access unauthorized.", html)
+
+    def test_delete_user(self):
+        """Should be able to delete user"""
+
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1.id
+
+            resp = client.post(
+                "/users/delete",
+            )
+
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.location, "/signup")
+            self.assertEqual(session.get(CURR_USER_KEY), None)
+
+            resp = client.get(resp.location)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(f"Deleted {self.u1.username}!", html)
+
 
     # def test_remove_user_unauth(self):
     #     with app.test_client() as client:
