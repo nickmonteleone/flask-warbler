@@ -71,9 +71,6 @@ class UserEditForm(FlaskForm):
     )
 
 
-
-
-
 class LoginForm(FlaskForm):
     """Login form."""
 
@@ -87,6 +84,6 @@ class LoginForm(FlaskForm):
         validators=[InputRequired(), Length(min=6, max=50)],
     )
 
-# Trying adding csrf form
+
 class CSRFProtectForm(FlaskForm):
     """Form just for CSRF Protection."""

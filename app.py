@@ -210,7 +210,6 @@ def show_liked_messages(user_id):
 
     messages_ids_to_show = [message.id for  message in user.messages_liked]
 
-    #simpler way to sort?  is there a way to sort by when liked
     messages = (Message
                 .query
                 .filter(Message.id.in_(messages_ids_to_show))
@@ -424,9 +423,7 @@ def like_message(message_id):
         g.user.messages_liked.append(message_to_like)
         db.session.commit()
 
-    #TODO:security issue - find different solution - won't work cuz browsers
-    #turn it off (plugins)
-    return redirect(request.referrer)
+    return redirect(request.form.get('referring_page'))
 
 
 @app.post('/messages/<int:message_id>/unlike')
@@ -446,7 +443,7 @@ def unlike_message(message_id):
     g.user.messages_liked.remove(message_to_unlike)
     db.session.commit()
 
-    return redirect(request.referrer)
+    return redirect(request.form.get('referring_page'))
 
 
 ##############################################################################
@@ -485,24 +482,3 @@ def add_header(response):
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
     response.cache_control.no_store = True
     return response
-
-
-
-
-#TODO: Things to bring up in tomorrow's lecture
-# cascade - delete
-# cache - no store
-# fail first
-# UNAUTHORIZED vs Oops you forgot to login (Sending IG link to my friends)
-    # be aware of what errors you are trying to send and why
-
-
-#Things to do:
-# Create a like function (can't like own tweet) CHECK
-# CSS/HTML create a star on liked messages CHECK
-# Clicking on a star should invoke a unlike message feature CHECK
-# Add liked icon message card on other pages CHECK
-
-# Create a page that shows liked warbles
-# Create a model for Likes - have it query.all() by specific users to find
-# tally

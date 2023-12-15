@@ -48,7 +48,7 @@
       <ul class="list-group" id="messages">
         {% for msg in messages %}
           <li class="list-group-item">
-            <!-- <a href="/messages/{{ msg.id }}" class="message-link"> -->
+            <a href="/messages/{{ msg.id }}" class="message-link">
             <a href="/users/{{ msg.user.id }}">
               <img src="{{ msg.user.image_url }}" alt="" class="timeline-image">
             </a>
@@ -57,25 +57,27 @@
                 <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }}</a>
                 <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
                 {% if g.user %}
-                {% if g.user.id != msg.user.id %}
-                {% if g.user.is_liked_by(msg) %}
-                <form method="POST"
-                      action="/messages/{{ msg.id }}/unlike">
-                  {{ g.csrf_form.csrf_token }}
-                  <button class="bi bi-star-fill btn btn-link"></button>
-                </form>
-                {% else %}
-                <form method="POST" action="/messages/{{ msg.id }}/like">
-                  {{ g.csrf_form.csrf_token }}
-                  <button class="bi bi-star btn btn-link"></button>
-                </form>
-                {% endif %}
-                {% endif %}
+                  {% if g.user.id != msg.user.id %}
+                    {% if g.user.is_liked_by(msg) %}
+                    <form method="POST"
+                          action="/messages/{{ msg.id }}/unlike">
+                      {{ g.csrf_form.csrf_token }}
+                      <input type="hidden" name="referring_page"
+                      value="{{ request.path }}">
+                      <button class="bi bi-star-fill btn btn-link"></button>
+                    </form>
+                    {% else %}
+                    <form method="POST" action="/messages/{{ msg.id }}/like">
+                      {{ g.csrf_form.csrf_token }}
+                      <input type="hidden" name="referring_page"
+                      value="{{ request.path }}">
+                      <button class="bi bi-star btn btn-link"></button>
+                    </form>
+                    {% endif %}
+                  {% endif %}
                 {% endif %}
               </div>
-              <a href="/messages/{{ msg.id }}" class="text-black" >
                 <p>{{ msg.text }} </p>
-              </a>
             </div>
           </li>
         {% endfor %}

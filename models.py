@@ -90,10 +90,11 @@ class User(db.Model):
 
     messages = db.relationship('Message', backref="user")
 
-    #TODO:liking_users (backref)
-    #separate on diff lines if past break + fix indentation
-    messages_liked = db.relationship('Message', secondary='likes',
-                                      backref='liked_users')
+    messages_liked = db.relationship(
+        'Message',
+        secondary='likes',
+        backref='liking_users',
+    )
 
     followers = db.relationship(
         "User",
@@ -160,17 +161,14 @@ class User(db.Model):
             user for user in self.following if user == other_user]
         return len(found_user_list) == 1
 
-    #TODO:any(message for message in self.message_liked if message == message_to_check)
-    #^ returns True/False - wont loop unnecessarily -- laziness
-    #lazy generator (not a list - polymorphism)
-
     def is_liked_by(self, message_to_check):
         """"Is this message liked by the user"""
 
-        found_message_list = [
-            message for message in self.messages_liked
-            if message == message_to_check]
-        return len(found_message_list) == 1
+        return any(
+            message
+            for message in self.messages_liked
+            if message == message_to_check
+        )
 
 
 class Message(db.Model):

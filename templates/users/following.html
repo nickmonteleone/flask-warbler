@@ -21,21 +21,20 @@
               <p>@{{ followed_user.username }}</p>
             </a>
             {% if g.user.is_following(followed_user) %}
-            <form method="POST"
-                  action="/users/stop-following/{{ followed_user.id }}">
-              {{ g.csrf_form.csrf_token }}
-              <button class="btn btn-primary btn-sm">Unfollow</button>
-            </form>
+              <form method="POST"
+                    action="/users/stop-following/{{ followed_user.id }}">
+                {{ g.csrf_form.csrf_token }}
+                <button class="btn btn-primary btn-sm">Unfollow</button>
+              </form>
             {% else %}
-            <form method="POST"
-                  action="/users/follow/{{ followed_user.id }}">
-              {{ g.csrf_form.csrf_token }}
-              <button class="btn btn-outline-primary btn-sm">
-                Follow
-              </button>
-            </form>
+              <form method="POST"
+                    action="/users/follow/{{ followed_user.id }}">
+                {{ g.csrf_form.csrf_token }}
+                <button class="btn btn-outline-primary btn-sm">
+                  Follow
+                </button>
+              </form>
             {% endif %}
-
           </div>
           <p class="card-bio">{{ followed_user.bio }}</p>
         </div>
