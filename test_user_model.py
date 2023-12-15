@@ -34,8 +34,10 @@ class UserModelTestCase(TestCase):
     def setUp(self):
         User.query.delete()
 
-        u1 = User.signup("u1", "u1@email.com", "password", None)
-        u2 = User.signup("u2", "u2@email.com", "password", None)
+        self.valid_password = "password"
+
+        u1 = User.signup("u1", "u1@email.com", self.valid_password, None)
+        u2 = User.signup("u2", "u2@email.com", self.valid_password, None)
 
         db.session.commit()
         self.u1_id = u1.id
@@ -78,61 +80,42 @@ class UserModelTestCase(TestCase):
                              .filter_by(username=u3.username)
                              .one_or_none())
 
+    def test_invalid_signup_username(self):
+        """Should not allow sign up for taken username"""
 
-    def test_invalid_signup(self):
+        try:
+            u4 = User.signup(self.u1.username, "u4@gmail.com","password",None)
+            db.session.commit()
 
-        self.assertRaises(IntegrityError,
-            User.signup(
-                        "u1",
-                        "u4@gmail.com",
-                        "password",
-                        None
-            ))
+        except IntegrityError:
+            u4 = 'username already taken'
 
+        self.assertEqual(u4, 'username already taken')
 
-# def signup(cls, username, email, password, image_url=DEFAULT_IMAGE_URL):
-#         """Sign up user.
+    def test_invalid_signup_email(self):
+        """Should not allow sign up for taken email"""
 
-#         Hashes password and adds user to session.
-#         """
+        try:
+            u4 = User.signup('u4', self.u1.email,"password",None)
+            db.session.commit()
 
-#         hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
+        except IntegrityError:
+            u4 = 'email already taken'
 
-#         user = User(
-#             username=username,
-#             email=email,
-#             password=hashed_pwd,
-#             image_url=image_url,
-#         )
+        self.assertEqual(u4, 'email already taken')
 
-#         db.session.add(user)
-#         return user
+    def test_auth_ok(self):
+        """Should authenticate and return user for valid creds"""
 
-# Does User.signup successfully create a new user given valid credentials?
-# Does User.signup fail to create a new user if any of the validations (eg uniqueness, non-nullable fields) fail?
+        u1_auth = User.authenticate(self.u1.username, self.valid_password)
+        self.assertEqual(u1_auth, self.u1)
 
+    def test_auth_fail_no_user(self):
+        """Should not auth for invalid username"""
 
+        self.assertFalse(User.authenticate("XXXXXX", self.valid_password))
 
+    def test_auth_ok_wrong_pwd(self):
+        """Should not auth for invalid pw"""
 
-    # def test_register(self):
-    #     User.register("uname", "pwd", "First", "Last", "e@e.com")
-    #     db.session.commit()
-
-    #     u = db.session.get(User, "uname")
-    #     self.assertTrue(bcrypt.check_password_hash(u.password, "pwd"))
-
-    # def test_auth_ok(self):
-    #     u = db.session.get(User, "user-1")
-    #     self.assertEqual(User.authenticate("user-1", "password"), u)
-
-    # def test_auth_fail_no_user(self):
-    #     self.assertFalse(User.authenticate("user-X", "password"))
-
-    # def test_auth_ok_wrong_pwd(self):
-    #     u = db.session.get(User, "user-1")
-    #     self.assertFalse(User.authenticate("user-1", "wrong"))
-
-
-# Does User.authenticate successfully return a user when given a valid username and password?
-# Does User.authenticate fail to return a user when the username is invalid?
-# Does User.authenticate fail to return a user when the password is invalid
+        self.assertFalse(User.authenticate(self.u1.username, 'XXXXXXX'))
