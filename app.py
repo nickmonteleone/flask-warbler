@@ -208,9 +208,9 @@ def show_liked_messages(user_id):
 
     user = User.query.get_or_404(user_id)
 
-    #simpler way to sort?  is there a way to sort by when liked
     messages_ids_to_show = [message.id for  message in user.messages_liked]
 
+    #simpler way to sort?  is there a way to sort by when liked
     messages = (Message
                 .query
                 .filter(Message.id.in_(messages_ids_to_show))
@@ -424,6 +424,8 @@ def like_message(message_id):
         g.user.messages_liked.append(message_to_like)
         db.session.commit()
 
+    #TODO:security issue - find different solution - won't work cuz browsers
+    #turn it off (plugins)
     return redirect(request.referrer)
 
 
