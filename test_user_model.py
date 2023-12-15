@@ -32,6 +32,7 @@ db.create_all()
 
 class UserModelTestCase(TestCase):
     def setUp(self):
+        Message.query.delete()
         User.query.delete()
 
         self.valid_password = "password"
