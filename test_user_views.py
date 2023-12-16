@@ -7,36 +7,20 @@
 
 import os
 from flask import session
-from werkzeug.exceptions import Unauthorized
 from unittest import TestCase
 
 from models import db, Message, User
 
-# BEFORE we import our app, let's set an environmental variable
-# to use a different database for tests (we need to do this
-# before we import our app, since that will have already
-# connected to the database
-
 os.environ['DATABASE_URL'] = "postgresql:///warbler_test"
-
-# Now we can import app
 
 from app import app, CURR_USER_KEY
 
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
-# This is a bit of hack, but don't use Flask DebugToolbar
-
 app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
-
-# Create our tables (we do this here, so we only create the tables
-# once for all tests --- in each test, we'll delete the data
-# and create fresh new clean test data
 
 db.drop_all()
 db.create_all()
-
-# Don't have WTForms use CSRF at all, since it's a pain to test
 
 app.config['WTF_CSRF_ENABLED'] = False
 
@@ -271,13 +255,13 @@ class UserProfileViewTestCase(UserBaseViewTestCase):
             with c.session_transaction() as sess:
                 sess[CURR_USER_KEY] = self.u1.id
             resp = c.get(
-                f"/users/{self.u1.id}",
+                f"/users/{self.u2.id}",
             )
 
             html = resp.get_data(as_text=True)
 
             self.assertIn("Comment for users/show.html loaded.", html)
-            self.assertIn(self.u1.username, html)
+            self.assertIn(self.u2.username, html)
 
     def test_show_user_unauth(self):
         """Should not allow unauth user"""
@@ -302,6 +286,8 @@ class UserProfileViewTestCase(UserBaseViewTestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Access unauthorized.", html)
 
+class UserDeleteViewTestCase(UserBaseViewTestCase):
+
     def test_delete_user(self):
         """Should be able to delete user"""
 
@@ -323,9 +309,6 @@ class UserProfileViewTestCase(UserBaseViewTestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn(f"Deleted {self.u1.username}!", html)
 
-
-#FIXME:with self.assertRaises
-
     def test_delete_user_unauth(self):
         """Should not be able to delete a user if unauthorized/not that user"""
 
@@ -342,7 +325,7 @@ class UserProfileViewTestCase(UserBaseViewTestCase):
             self.assertIn("Unauthorized",html)
             self.assertEqual(resp.status_code,401)
 
-            # with self.assertRaises(IntegrityError):
+class UserUpdateViewTestCase(UserBaseViewTestCase):
 
     def test_update_profile_form(self):
         """Should load update profile form"""
@@ -462,6 +445,7 @@ class UserProfileViewTestCase(UserBaseViewTestCase):
             self.assertIn("Incorrect password", html)
             self.assertEqual(session.get(CURR_USER_KEY), self.u1.id)
 
+class UserFollowViewTestCase(UserBaseViewTestCase):
 
     def test_follow_user(self):
         """Should be able to follow a user"""
@@ -483,6 +467,24 @@ class UserProfileViewTestCase(UserBaseViewTestCase):
 
             self.assertIn(self.u2, self.u1.following)
             self.assertEqual(len(self.u1.following), 1)
+
+    def test_unable_to_follow_self(self):
+        """Should not be able to follow own user"""
+
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1.id
+
+            resp = c.post(
+                f'/users/follow/{self.u1.id}',
+                follow_redirects=True
+            )
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("You cannot follow yourself!", html)
+            self.assertNotIn(self.u1, self.u1.following)
+            self.assertNotIn(self.u1, self.u1.followers)
 
     def test_follow_user_again(self):
         """Should have no change if try to follow a user twice"""
@@ -572,9 +574,3 @@ class UserProfileViewTestCase(UserBaseViewTestCase):
             self.assertIn(self.u2.username, html)
 
             self.assertIn('Comment for users/followers.html loaded', html)
-
-    # def test_show_followers(self):
-
-    # def test_start_following(self):
-
-    # def test_stop_following(self):

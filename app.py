@@ -426,11 +426,12 @@ def like_message(message_id):
     if g.user.id == message_to_like.user_id:
         flash("You cannot like your own Warble!", "danger")
 
-    else:
+    elif message_to_like not in g.user.messages_liked:
         g.user.messages_liked.append(message_to_like)
         db.session.commit()
 
-    return redirect(request.form.get('referring_page'))
+    return redirect(
+        request.form.get('referring_page', f'/messages/{message_id}'))
 
 
 @app.post('/messages/<int:message_id>/unlike')
@@ -447,10 +448,16 @@ def unlike_message(message_id):
 
     message_to_unlike = Message.query.get_or_404(message_id)
 
-    g.user.messages_liked.remove(message_to_unlike)
-    db.session.commit()
+    if message_to_unlike in g.user.messages_liked:
+        g.user.messages_liked.remove(message_to_unlike)
+        db.session.commit()
 
-    return redirect(request.form.get('referring_page'))
+    return redirect(
+        request.form.get(
+            'referring_page',
+            f'/messages/{message_id}'
+        )
+    )
 
 
 ##############################################################################
